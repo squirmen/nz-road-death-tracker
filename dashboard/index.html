@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NZ Road Safety Dashboard</title>
+  <!-- External libraries -->
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Your custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading dashboard data...</div>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">New Zealand Road Safety Dashboard</h1>
+      <p class="dashboard-subtitle">Comprehensive analytics and insights on road safety in New Zealand. 
+      Explore data patterns, risk factors, and trends to support evidence-based safety initiatives.</p>
+    </div>
+    
+    <div class="filters-container">
+      <div class="card filters-card" id="filtersCard">
+        <div class="card-header filters-header" id="filtersToggle">
+          <h3 class="card-title"><i class="fas fa-filter"></i> Data Filters</h3>
+          <i class="fas fa-chevron-up toggle-icon" id="filterIcon"></i>
+        </div>
+        <div class="card-body mini-filters" id="filtersBody">
+          <!-- Left section - Time range -->
+          <div class="mini-filter-section">
+            <div class="mini-filter-group">
+              <label class="filter-label">
+                Time Range
+                <div class="tooltip-wrapper">
+                  <span class="tooltip-icon mini-tooltip-icon">i</span>
+                  <div class="tooltip-content">
+                    Select custom date range to focus on specific time periods.
+                  </div>
+                </div>
+              </label>
+              <div class="mini-date-inputs">
+                <div class="input-wrapper mini-date-input">
+                  <input type="text" id="startDate" class="filter-input mini-input" placeholder="Start">
+                </div>
+                <div class="input-wrapper mini-date-input">
+                  <input type="text" id="endDate" class="filter-input mini-input" placeholder="End">
+                </div>
+              </div>
+              <div class="mini-chips">
+                <div class="mini-chip" data-range="30">30d</div>
+                <div class="mini-chip" data-range="90">3m</div>
+                <div class="mini-chip" data-range="180">6m</div>
+                <div class="mini-chip" data-range="ytd">YTD</div>
+                <div class="mini-chip" data-range="365">1y</div>
+                <div class="mini-chip active" data-range="all">All</div>
+              </div>
+            </div>
+            
+            <div class="mini-filter-group">
+              <label class="filter-label">Comparison</label>
+              <div class="input-wrapper">
+                <select id="comparisonFilter" class="filter-select mini-select">
+                  <option value="none">No Comparison</option>
+                  <option value="lastYear">vs Last Year</option>
+                  <option value="lastPeriod">vs Previous Period</option>
+                  <option value="avgThreeYears">vs 3-Year Avg</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right section - Categories -->
+          <div class="mini-filter-section">
+            <div class="mini-filter-row">
+              <div class="mini-filter-group">
+                <label class="filter-label">
+                  Region
+                  <div class="tooltip-wrapper">
+                    <span class="tooltip-icon mini-tooltip-icon">i</span>
+                    <div class="tooltip-content">Filter by region</div>
+                  </div>
+                </label>
+                <div class="input-wrapper">
+                  <select id="regionFilter" class="filter-select mini-select">
+                    <option value="all">All Regions</option>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              
+              <div class="mini-filter-group">
+                <label class="filter-label">
+                  Vehicle
+                  <div class="tooltip-wrapper">
+                    <span class="tooltip-icon mini-tooltip-icon">i</span>
+                    <div class="tooltip-content">Filter by vehicle type</div>
+                  </div>
+                </label>
+                <div class="input-wrapper">
+                  <select id="vehicleFilter" class="filter-select mini-select">
+                    <option value="all">All Vehicles</option>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mini-filter-row">
+              <div class="mini-filter-group">
+                <label class="filter-label">
+                  Age
+                  <div class="tooltip-wrapper">
+                    <span class="tooltip-icon mini-tooltip-icon">i</span>
+                    <div class="tooltip-content">Filter by age group</div>
+                  </div>
+                </label>
+                <div class="input-wrapper">
+                  <select id="ageFilter" class="filter-select mini-select">
+                    <option value="all">All Ages</option>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              
+              <div class="mini-filter-group">
+                <label class="filter-label">
+                  Gender
+                  <div class="tooltip-wrapper">
+                    <span class="tooltip-icon mini-tooltip-icon">i</span>
+                    <div class="tooltip-content">Filter by gender</div>
+                  </div>
+                </label>
+                <div class="input-wrapper">
+                  <select id="genderFilter" class="filter-select mini-select">
+                    <option value="all">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Unknown">Unknown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body mini-actions">
+          <div class="mini-button-group">
+            <button id="applyFilters" class="btn btn-primary btn-sm">
+              <i class="fas fa-check"></i> Apply
+            </button>
+            <button id="resetFilters" class="btn btn-outline btn-sm">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+          <div id="activeFiltersCount" class="badge badge-primary">No active filters</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Key Performance Indicators</h2>
+      </div>
+      <div class="stats-grid" id="summaryStats">
+        <!-- Key statistics will be rendered here -->
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-brain"></i> Advanced Safety Metrics</h2>
+        <button class="btn btn-sm btn-outline open-modal" data-modal="metricsInfoModal">
+          <i class="fas fa-info-circle"></i> About These Metrics
+        </button>
+      </div>
+      <div class="stats-grid" id="advancedMetrics">
+        <!-- Advanced metrics will be rendered here -->
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-lightbulb"></i> Key Insights</h2>
+      </div>
+      <div class="insights-container" id="insightsContainer">
+        <!-- Insights will be dynamically generated -->
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-chart-area"></i> Fatality Trends</h2>
+      </div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Daily Fatalities Gap
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows the number of days between each fatality incident. Higher bars indicate longer periods of safer road conditions - the goal is to increase these gaps over time.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Higher bars indicate longer periods without road fatalities</p>
+            <div id="daysBetweenChart" style="height: 400px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Cumulative Road Deaths
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows the accumulation of road fatalities over time. Steeper slopes indicate periods with higher fatality rates, while flatter sections represent safer periods.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Steeper slopes indicate periods with higher fatality rates</p>
+            <div id="cumulativeChart" style="height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Temporal Patterns</h2>
+      </div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Monthly Fatality Distribution
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows how road fatalities are distributed across months of the year, helping identify seasonal patterns and high-risk periods.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Identifies seasonal patterns in road fatalities</p>
+            <div id="monthlyChart" style="height: 400px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Day of Week Analysis
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows how fatalities are distributed across days of the week, helping identify high-risk days for road travel and potential factors like weekend recreational driving.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Helps identify high-risk days for road travel</p>
+            <div id="weekdayChart" style="height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Geographic & Demographic Analysis</h2>
+      </div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Regional Distribution
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows how road fatalities are distributed across different regions of New Zealand, helping target safety initiatives to high-risk areas.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Identifies high-risk regions for targeted safety interventions</p>
+            <div id="regionChart" style="height: 400px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Age & Gender Analysis
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows the distribution of road fatalities by age group and gender, helping identify demographic groups at higher risk.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Identifies demographic groups at higher risk</p>
+            <div id="ageGenderChart" style="height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-car-crash"></i> Risk Factor Analysis</h2>
+      </div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Vehicle Type Distribution
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows the distribution of road fatalities by vehicle type involved, identifying high-risk vehicle categories and potential areas for safety improvements.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Identifies high-risk vehicle categories</p>
+            <div id="vehicleChart" style="height: 400px;"></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Time of Day Heatmap
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">i</span>
+                <div class="tooltip-content">
+                  Shows when fatalities occur throughout the day and week, helping identify patterns like rush hour risks or late-night weekend driving hazards.
+                </div>
+              </div>
+            </h3>
+          </div>
+          <div class="card-body">
+            <p class="chart-description">Identifies high-risk times for road travel</p>
+            <div id="timeHeatmapChart" style="height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-grid">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        Road Type Distribution
+        <div class="tooltip-wrapper">
+          <span class="tooltip-icon">i</span>
+          <div class="tooltip-content">
+            Shows how fatalities are distributed across different road types, helping identify which infrastructure types are associated with higher fatality rates.
+          </div>
+        </div>
+      </h3>
+    </div>
+    <div class="card-body">
+      <p class="chart-description">Identifies high-risk road infrastructure types</p>
+      <div id="roadTypeChart" style="height: 400px;"></div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        Single vs. Multi-Vehicle Crashes
+        <div class="tooltip-wrapper">
+          <span class="tooltip-icon">i</span>
+          <div class="tooltip-content">
+            Compares the proportion of fatal crashes involving a single vehicle versus multiple vehicles, highlighting different crash patterns that may require different prevention approaches.
+          </div>
+        </div>
+      </h3>
+    </div>
+    <div class="card-body">
+      <p class="chart-description">Shows distribution of crash configurations</p>
+      <div id="vehicleCountChart" style="height: 400px;"></div>
+    </div>
+  </div>
+</div>
+    
+    <!-- Modals -->
+    <div class="modal" id="metricsInfoModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Understanding Advanced Safety Metrics</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>These advanced metrics provide deeper insights into road safety patterns:</p>
+          
+          <h4><i class="fas fa-chart-line"></i> Annual Fatality Rate</h4>
+          <p>Represents the number of road fatalities per 100,000 population. This standardized measure allows for comparison across different time periods and regions with varying populations.</p>
+          
+          <h4><i class="fas fa-chart-bar"></i> Safety Streak Volatility</h4>
+          <p>Measures the variation in days between fatal crashes. Higher volatility indicates unpredictable patterns, while lower volatility suggests more consistent (either consistently good or bad) safety trends.</p>
+          
+          <h4><i class="fas fa-calendar-alt"></i> Monthly Fatality Frequency</h4>
+          <p>Calculates the average number of fatalities per month, helping establish a baseline for evaluating short-term trends and seasonal variations.</p>
+          
+          <h4><i class="fas fa-stopwatch"></i> Safety Gap Change</h4>
+          <p>Tracks the change in average days between fatal crashes compared to previous periods. A positive value indicates improvement (longer gaps between fatalities), while negative values suggest deteriorating conditions.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Data source: Ministry of Transport | Last updated: <span id="lastUpdated">Loading...</span></p>
+      <p>Note: This dashboard uses provisional data that may be subject to revision.</p>
+    </div>
+  </div>
+
+  <!-- Your custom JavaScript -->
+  <script src="config.js"></script>
+  <script src="data-utils.js"></script>
+  <script src="charts.js"></script>
+  <script src="metrics.js"></script>
+  <script src="insights.js"></script>
+  <script src="filters.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
