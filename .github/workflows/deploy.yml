@@ -10,20 +10,29 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Deploy Tracker (Main Website)
+    - name: Deploy main files from tracker folder
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
         server: tfwelch.com
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./tracker/  # The folder containing your main website files
-        server-dir: nzroads.tfwelch.com/  # Root of your subdomain
-        
-    - name: Deploy Dashboard
+        local-dir: ./tracker/
+        server-dir: nzroads.tfwelch.com/
+
+    - name: Deploy dashboard files
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
         server: tfwelch.com
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./dashboard/  # The folder containing your dashboard files
-        server-dir: nzroads.tfwelch.com/dashboard/  # Subdirectory for the dashboard
+        local-dir: ./dashboard/
+        server-dir: nzroads.tfwelch.com/dashboard/
+
+    - name: Deploy assets
+      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      with:
+        server: tfwelch.com
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./assets/
+        server-dir: nzroads.tfwelch.com/assets/
